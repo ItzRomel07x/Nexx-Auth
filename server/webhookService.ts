@@ -251,3 +251,4 @@ export class WebhookService {
 }
 
 export const webhookService = WebhookService.getInstance();
+export default webhookService;

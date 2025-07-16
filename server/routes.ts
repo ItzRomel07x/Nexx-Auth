@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { mongoStorage as storage } from "./mongoStorage.js";
+import { storage } from "./storage.js";
 import { setupAuth, isAuthenticated } from "./replitAuth.js";
-import { requirePermission, requireRole, PERMISSIONS, ROLES } from "./permissions.js";
+import { requirePermission, requireRole, PERMISSIONS, ROLES, getUserPermissions } from "./permissions.js";
 import { WebhookService } from "./webhookService.js";
 const webhookService = WebhookService.getInstance();
 import { 
@@ -97,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      const permissions = await storage.getUserPermissions(userId);
+      const permissions = await getUserPermissions(userId);
       console.log('User permissions:', permissions);
       
       res.json({ ...user, userPermissions: permissions });
