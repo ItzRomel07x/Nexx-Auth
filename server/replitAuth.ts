@@ -41,16 +41,9 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production';
 
-  // Use MongoDB for session store
-  const sessionStore = MongoStore.create({
-    mongoUrl: process.env.MONGODB_URL, // Ensure MONGODB_URL is in .env
-    touchAfter: 24 * 3600, // lazy session update (24 hours)
-    collectionName: 'sessions'
-  });
-
+  // Use in-memory session store for simplicity
   return session({
     secret: sessionSecret,
-    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
