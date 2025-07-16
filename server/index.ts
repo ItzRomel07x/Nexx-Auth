@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { config, validateRequiredEnvVars } from "./environment";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { config, validateRequiredEnvVars } from "./environment.js";
 
 const app = express();
 
@@ -61,6 +61,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize MongoDB connection
+  const { mongoStorage } = await import("./mongoStorage.js");
+  await mongoStorage.connect();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {

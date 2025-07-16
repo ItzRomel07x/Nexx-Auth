@@ -6,8 +6,9 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import admin from "firebase-admin";
+import MongoStore from 'connect-mongo';
 
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
@@ -38,17 +39,15 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
-  });
-  
-  // Generate a default session secret if not provided (for deployment environments)
   const sessionSecret = process.env.SESSION_SECRET || 'fallback-secret-key-change-in-production';
-  
+
+  // Use MongoDB for session store
+  const sessionStore = MongoStore.create({
+    mongoUrl: process.env.MONGODB_URL, // Ensure MONGODB_URL is in .env
+    touchAfter: 24 * 3600, // lazy session update (24 hours)
+    collectionName: 'sessions'
+  });
+
   return session({
     secret: sessionSecret,
     store: sessionStore,
@@ -148,7 +147,7 @@ export async function setupAuth(app: Express) {
       });
       return;
     }
-    
+
     const config = await getOidcConfig();
     req.logout(() => {
       res.redirect(
@@ -164,7 +163,7 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   console.log(`Auth check for ${req.method} ${req.path} - req.user:`, req.user);
   console.log(`Auth check - session:`, req.session);
-  
+
   // Check if this is a logout request - skip authentication
   if (req.path === '/api/logout') {
     return next();

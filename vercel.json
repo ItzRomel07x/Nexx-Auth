@@ -1,28 +1,28 @@
 {
   "version": 2,
-  "buildCommand": "vite build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/auth/(.*)",
-      "dest": "/api/auth/[...auth]"
+      "source": "/api/auth/(.*)",
+      "destination": "/api/auth/[...auth]"
     },
     {
-      "src": "/api/v1/(.*)",
-      "dest": "/api/v1/[...api]"
+      "source": "/api/v1/(.*)",
+      "destination": "/api/v1/[...api]"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index"
+      "source": "/api/(.*)",
+      "destination": "/api/index"
     },
     {
-      "src": "/(.*)",
-      "dest": "/api/index"
+      "source": "/(.*)",
+      "destination": "/api/index"
     }
   ],
   "functions": {
     "api/**/*.ts": {
-      "runtime": "nodejs20.x"
+      "runtime": "@vercel/node@3.0.15"
     }
   }
 }

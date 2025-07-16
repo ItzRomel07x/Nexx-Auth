@@ -2,6 +2,7 @@
 export const config = {
   // Database
   DATABASE_URL: process.env.DATABASE_URL || '',
+  MONGODB_URL: process.env.MONGODB_URL || process.env.DATABASE_URL || '',
   
   // Session
   SESSION_SECRET: process.env.SESSION_SECRET || 'fallback-secret-change-in-production',
@@ -24,14 +25,9 @@ export const config = {
 };
 
 export function validateRequiredEnvVars() {
-  const required = ['DATABASE_URL'];
-  const missing = required.filter(key => !process.env[key]);
-  
-  if (missing.length > 0) {
-    console.warn(`Warning: Missing environment variables: ${missing.join(', ')}`);
-    if (config.isProduction) {
-      throw new Error(`Required environment variables missing: ${missing.join(', ')}`);
-    }
+  // MongoDB URL is required
+  if (!process.env.DATABASE_URL && !process.env.MONGODB_URL) {
+    throw new Error('MongoDB connection string required. Please set MONGODB_URL in Replit Secrets.');
   }
   
   return true;

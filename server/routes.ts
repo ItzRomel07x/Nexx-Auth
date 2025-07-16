@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requirePermission, requireRole, PERMISSIONS, ROLES, getUserPermissions } from "./permissions";
-import { webhookService } from "./webhookService";
+import { mongoStorage as storage } from "./mongoStorage.js";
+import { setupAuth, isAuthenticated } from "./replitAuth.js";
+import { requirePermission, requireRole, PERMISSIONS, ROLES } from "./permissions.js";
+import { WebhookService } from "./webhookService.js";
+const webhookService = WebhookService.getInstance();
 import { 
   insertApplicationSchema, 
   insertAppUserSchema, 
@@ -13,7 +14,7 @@ import {
   loginSchema,
   insertWebhookSchema,
   insertBlacklistSchema
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { z } from "zod";
 
 // Middleware to validate API key for external API access
@@ -96,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      const permissions = await getUserPermissions(userId);
+      const permissions = await storage.getUserPermissions(userId);
       console.log('User permissions:', permissions);
       
       res.json({ ...user, userPermissions: permissions });
