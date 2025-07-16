@@ -11,29 +11,58 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  messagingSenderId: "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key-placeholder",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project"}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project"}.firebasestorage.app`,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "demo-app-id",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Initialize Firebase with error handling
+let app;
+let auth;
 
-// Configure Google provider
-const googleProvider = new GoogleAuthProvider();
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
-googleProvider.setCustomParameters({
-  prompt: 'select_account',
-  hd: '' // Force account picker for all domains
-});
+try {
+  // Check if we have valid Firebase configuration
+  const hasValidConfig = firebaseConfig.apiKey && 
+                        firebaseConfig.apiKey !== "demo-api-key-placeholder" &&
+                        firebaseConfig.projectId && 
+                        firebaseConfig.projectId !== "demo-project";
+
+  if (hasValidConfig) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    console.log("✅ Firebase initialized successfully");
+  } else {
+    console.warn("⚠️ Firebase not configured - using demo mode. Please add VITE_FIREBASE_* environment variables for full functionality.");
+    // Create a mock auth object for development
+    auth = null;
+  }
+} catch (error) {
+  console.error("❌ Firebase initialization failed:", error);
+  console.warn("⚠️ Running in demo mode. Please check your Firebase configuration.");
+  auth = null;
+}
+
+// Configure Google provider (only if Firebase is available)
+let googleProvider = null;
+if (auth) {
+  googleProvider = new GoogleAuthProvider();
+  googleProvider.addScope('email');
+  googleProvider.addScope('profile');
+  googleProvider.setCustomParameters({
+    prompt: 'select_account',
+    hd: '' // Force account picker for all domains
+  });
+}
 
 // ✅ Google Login (Always ask for account)
 export const signInWithGoogle = async () => {
+  if (!auth) {
+    throw new Error("Firebase not properly configured. Please add VITE_FIREBASE_* environment variables.");
+  }
+
   const provider = new GoogleAuthProvider();
 
   // Force Google to show account chooser
@@ -70,9 +99,13 @@ export const signOutUser = async () => {
       credentials: 'include'
     });
 
-    // Then sign out from Firebase
-    await signOut(auth);
-    console.log("✅ Firebase signout completed");
+    // Then sign out from Firebase (if available)
+    if (auth) {
+      await signOut(auth);
+      console.log("✅ Firebase signout completed");
+    } else {
+      console.log("✅ Logout completed (Firebase not configured)");
+    }
 
     // Clear all stored session/local data except logout flag
     const logoutFlag = localStorage.getItem('user_logged_out');
@@ -101,6 +134,11 @@ export const signOutUser = async () => {
 };
 
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  if (!auth) {
+    // If Firebase is not configured, immediately call with null user
+    callback(null);
+    return () => {}; // Return empty unsubscribe function
+  }
   return onAuthStateChanged(auth, callback);
 };
 

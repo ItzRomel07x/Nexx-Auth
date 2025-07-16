@@ -610,4 +610,422 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory storage implementation
+class MemStorage implements IStorage {
+  private users: Map<string, User> = new Map();
+  private applications: Map<number, Application> = new Map();
+  private licenseKeys: Map<number, LicenseKey> = new Map();
+  private appUsers: Map<number, AppUser> = new Map();
+  private webhooks: Map<number, Webhook> = new Map();
+  private blacklist: Map<number, BlacklistEntry> = new Map();
+  private activityLogs: Map<number, ActivityLog> = new Map();
+  private activeSessions: Map<number, ActiveSession> = new Map();
+  
+  private nextId = 1;
+
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const user: User = {
+      id: userData.id,
+      email: userData.email || null,
+      firstName: userData.firstName || null,
+      lastName: userData.lastName || null,
+      profileImageUrl: userData.profileImageUrl || null,
+      role: userData.email === 'mohitsindhu121@gmail.com' ? 'owner' : 'user',
+      permissions: userData.email === 'mohitsindhu121@gmail.com' ? [
+        'edit_code', 'manage_users', 'manage_applications', 
+        'view_all_data', 'delete_applications', 'manage_permissions', 'access_admin_panel'
+      ] : [],
+      isActive: true,
+      createdAt: userData.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(user.id, user);
+    return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async updateUser(id: string, updates: Partial<UpsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...updates, updatedAt: new Date() };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    return this.users.delete(id);
+  }
+
+  // Application methods
+  async getApplication(id: number): Promise<Application | undefined> {
+    return this.applications.get(id);
+  }
+
+  async getApplicationByApiKey(apiKey: string): Promise<Application | undefined> {
+    return Array.from(this.applications.values()).find(app => app.apiKey === apiKey);
+  }
+
+  async createApplication(userId: string, app: InsertApplication): Promise<Application> {
+    const apiKey = `nexx_${Math.random().toString(36).substring(2, 34)}`;
+    const application: Application = {
+      id: this.nextId++,
+      name: app.name,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      userId,
+      description: app.description || null,
+      apiKey,
+      version: app.version || "1.0.0",
+      hwidLockEnabled: app.hwidLockEnabled || false,
+      loginSuccessMessage: app.loginSuccessMessage || "Login successful",
+      loginFailedMessage: app.loginFailedMessage || "Login failed",
+      accountDisabledMessage: app.accountDisabledMessage || "Account disabled",
+      accountExpiredMessage: app.accountExpiredMessage || "Account expired",
+      versionMismatchMessage: app.versionMismatchMessage || "Version mismatch",
+      hwidMismatchMessage: app.hwidMismatchMessage || "Hardware ID mismatch",
+    };
+    this.applications.set(application.id, application);
+    return application;
+  }
+
+  async updateApplication(id: number, updates: UpdateApplication): Promise<Application | undefined> {
+    const app = this.applications.get(id);
+    if (!app) return undefined;
+    
+    const updatedApp = { ...app, ...updates, updatedAt: new Date() };
+    this.applications.set(id, updatedApp);
+    return updatedApp;
+  }
+
+  async deleteApplication(id: number): Promise<boolean> {
+    return this.applications.delete(id);
+  }
+
+  async getAllApplications(userId: string): Promise<Application[]> {
+    return Array.from(this.applications.values()).filter(app => app.userId === userId);
+  }
+
+  // License Key methods
+  async createLicenseKey(applicationId: number, license: InsertLicenseKey): Promise<LicenseKey> {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + license.validityDays);
+    
+    const key: LicenseKey = {
+      id: this.nextId++,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      description: license.description || null,
+      applicationId,
+      licenseKey: license.licenseKey,
+      maxUsers: license.maxUsers,
+      currentUsers: 0,
+      validityDays: license.validityDays,
+      expiresAt: expiresAt,
+    };
+    this.licenseKeys.set(key.id, key);
+    return key;
+  }
+
+  async getLicenseKey(id: number): Promise<LicenseKey | undefined> {
+    return this.licenseKeys.get(id);
+  }
+
+  async getLicenseKeyByKey(licenseKey: string): Promise<LicenseKey | undefined> {
+    return Array.from(this.licenseKeys.values()).find(key => key.licenseKey === licenseKey);
+  }
+
+  async getAllLicenseKeys(applicationId: number): Promise<LicenseKey[]> {
+    return Array.from(this.licenseKeys.values()).filter(key => key.applicationId === applicationId);
+  }
+
+  async updateLicenseKey(id: number, updates: Partial<InsertLicenseKey>): Promise<LicenseKey | undefined> {
+    const key = this.licenseKeys.get(id);
+    if (!key) return undefined;
+    
+    const updatedKey = { ...key, ...updates, updatedAt: new Date() };
+    this.licenseKeys.set(id, updatedKey);
+    return updatedKey;
+  }
+
+  async deleteLicenseKey(id: number): Promise<boolean> {
+    return this.licenseKeys.delete(id);
+  }
+
+  async validateLicenseKey(licenseKey: string, applicationId: number): Promise<LicenseKey | null> {
+    const key = await this.getLicenseKeyByKey(licenseKey);
+    if (!key || key.applicationId !== applicationId || !key.isActive) return null;
+    if (key.expiresAt && key.expiresAt < new Date()) return null;
+    return key;
+  }
+
+  async incrementLicenseUsage(licenseKeyId: number): Promise<boolean> {
+    const key = this.licenseKeys.get(licenseKeyId);
+    if (!key) return false;
+    key.currentUsers++;
+    return true;
+  }
+
+  async decrementLicenseUsage(licenseKeyId: number): Promise<boolean> {
+    const key = this.licenseKeys.get(licenseKeyId);
+    if (!key) return false;
+    if (key.currentUsers > 0) key.currentUsers--;
+    return true;
+  }
+
+  // App User methods
+  async getAppUser(id: number): Promise<AppUser | undefined> {
+    return this.appUsers.get(id);
+  }
+
+  async getAppUserByUsername(applicationId: number, username: string): Promise<AppUser | undefined> {
+    return Array.from(this.appUsers.values()).find(user => 
+      user.applicationId === applicationId && user.username === username
+    );
+  }
+
+  async getAppUserByEmail(applicationId: number, email: string): Promise<AppUser | undefined> {
+    return Array.from(this.appUsers.values()).find(user => 
+      user.applicationId === applicationId && user.email === email
+    );
+  }
+
+  async createAppUserWithLicense(applicationId: number, user: InsertAppUser): Promise<AppUser> {
+    return this.createAppUser(applicationId, user);
+  }
+
+  async createAppUser(applicationId: number, insertUser: InsertAppUser): Promise<AppUser> {
+    const expiresAt = insertUser.expiresAt ? new Date(insertUser.expiresAt) : null;
+    
+    const user: AppUser = {
+      id: this.nextId++,
+      email: insertUser.email,
+      isActive: true,
+      createdAt: new Date(),
+      applicationId,
+      expiresAt: expiresAt,
+      licenseKeyId: null,
+      username: insertUser.username,
+      password: insertUser.password,
+      isPaused: false,
+      hwid: insertUser.hwid || null,
+      lastLogin: null,
+      loginAttempts: 0,
+      lastLoginAttempt: null,
+    };
+    this.appUsers.set(user.id, user);
+    return user;
+  }
+
+  async updateAppUser(id: number, updates: UpdateAppUser): Promise<AppUser | undefined> {
+    const user = this.appUsers.get(id);
+    if (!user) return undefined;
+    
+    // Handle expiresAt conversion - ensure it's Date or null
+    const processedUpdates: any = { ...updates };
+    if (updates.expiresAt) {
+      processedUpdates.expiresAt = typeof updates.expiresAt === 'string' 
+        ? new Date(updates.expiresAt) 
+        : updates.expiresAt;
+    }
+    
+    const updatedUser: AppUser = { ...user, ...processedUpdates };
+    this.appUsers.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async pauseAppUser(id: number): Promise<boolean> {
+    const user = this.appUsers.get(id);
+    if (!user) return false;
+    user.isPaused = true;
+    return true;
+  }
+
+  async unpauseAppUser(id: number): Promise<boolean> {
+    const user = this.appUsers.get(id);
+    if (!user) return false;
+    user.isPaused = false;
+    return true;
+  }
+
+  async deleteAppUser(id: number): Promise<boolean> {
+    return this.appUsers.delete(id);
+  }
+
+  async resetAppUserHwid(id: number): Promise<boolean> {
+    const user = this.appUsers.get(id);
+    if (!user) return false;
+    user.hwid = null;
+    return true;
+  }
+
+  async setAppUserHwid(id: number, hwid: string): Promise<boolean> {
+    const user = this.appUsers.get(id);
+    if (!user) return false;
+    user.hwid = hwid;
+    return true;
+  }
+
+  async getAllAppUsers(applicationId: number): Promise<AppUser[]> {
+    return Array.from(this.appUsers.values()).filter(user => user.applicationId === applicationId);
+  }
+
+  // Webhook methods
+  async createWebhook(userId: string, webhook: InsertWebhook): Promise<Webhook> {
+    const newWebhook: Webhook = {
+      id: this.nextId++,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      userId,
+      url: webhook.url,
+      secret: webhook.secret || null,
+      events: webhook.events || [],
+    };
+    this.webhooks.set(newWebhook.id, newWebhook);
+    return newWebhook;
+  }
+
+  async getUserWebhooks(userId: string): Promise<Webhook[]> {
+    return Array.from(this.webhooks.values()).filter(webhook => webhook.userId === userId);
+  }
+
+  async updateWebhook(id: number, updates: Partial<InsertWebhook>): Promise<Webhook | undefined> {
+    const webhook = this.webhooks.get(id);
+    if (!webhook) return undefined;
+    
+    const updatedWebhook = { ...webhook, ...updates, updatedAt: new Date() };
+    this.webhooks.set(id, updatedWebhook);
+    return updatedWebhook;
+  }
+
+  async deleteWebhook(id: number): Promise<boolean> {
+    return this.webhooks.delete(id);
+  }
+
+  // Blacklist methods
+  async createBlacklistEntry(entry: InsertBlacklistEntry): Promise<BlacklistEntry> {
+    const blacklistEntry: BlacklistEntry = {
+      id: this.nextId++,
+      isActive: true,
+      createdAt: new Date(),
+      userId: null,
+      value: entry.value,
+      type: entry.type,
+      applicationId: entry.applicationId || null,
+      reason: entry.reason || null,
+      createdBy: null,
+    };
+    this.blacklist.set(blacklistEntry.id, blacklistEntry);
+    return blacklistEntry;
+  }
+
+  async getBlacklistEntries(applicationId?: number): Promise<BlacklistEntry[]> {
+    const entries = Array.from(this.blacklist.values());
+    return applicationId ? entries.filter(entry => entry.applicationId === applicationId) : entries;
+  }
+
+  async checkBlacklist(applicationId: number, type: string, value: string): Promise<BlacklistEntry | undefined> {
+    return Array.from(this.blacklist.values()).find(entry => 
+      entry.applicationId === applicationId && entry.type === type && entry.value === value
+    );
+  }
+
+  async deleteBlacklistEntry(id: number): Promise<boolean> {
+    return this.blacklist.delete(id);
+  }
+
+  // Activity logging methods
+  async createActivityLog(log: InsertActivityLog): Promise<ActivityLog> {
+    const activityLog: ActivityLog = {
+      id: this.nextId++,
+      createdAt: new Date(),
+      applicationId: log.applicationId || null,
+      hwid: log.hwid || null,
+      appUserId: log.appUserId || null,
+      event: log.event,
+      ipAddress: log.ipAddress || null,
+      userAgent: log.userAgent || null,
+      metadata: log.metadata || null,
+      success: log.success || false,
+      errorMessage: log.errorMessage || null,
+    };
+    this.activityLogs.set(activityLog.id, activityLog);
+    return activityLog;
+  }
+
+  async getActivityLogs(applicationId: number, limit: number = 100): Promise<ActivityLog[]> {
+    return Array.from(this.activityLogs.values())
+      .filter(log => log.applicationId === applicationId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async getUserActivityLogs(appUserId: number, limit: number = 100): Promise<ActivityLog[]> {
+    return Array.from(this.activityLogs.values())
+      .filter(log => log.appUserId === appUserId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  // Session tracking methods
+  async createActiveSession(session: Omit<ActiveSession, 'id' | 'createdAt' | 'lastActivity'>): Promise<ActiveSession> {
+    const activeSession: ActiveSession = {
+      id: this.nextId++,
+      isActive: true,
+      createdAt: new Date(),
+      applicationId: session.applicationId,
+      expiresAt: session.expiresAt,
+      hwid: session.hwid,
+      appUserId: session.appUserId,
+      ipAddress: session.ipAddress,
+      userAgent: session.userAgent,
+      sessionToken: session.sessionToken,
+      location: session.location,
+      lastActivity: new Date(),
+    };
+    this.activeSessions.set(activeSession.id, activeSession);
+    return activeSession;
+  }
+
+  async getActiveSessions(applicationId: number): Promise<ActiveSession[]> {
+    return Array.from(this.activeSessions.values()).filter(session => 
+      session.applicationId === applicationId && session.isActive
+    );
+  }
+
+  async updateSessionActivity(sessionToken: string): Promise<boolean> {
+    const session = Array.from(this.activeSessions.values()).find(s => s.sessionToken === sessionToken);
+    if (!session) return false;
+    session.lastActivity = new Date();
+    return true;
+  }
+
+  async endSession(sessionToken: string): Promise<boolean> {
+    const session = Array.from(this.activeSessions.values()).find(s => s.sessionToken === sessionToken);
+    if (!session) return false;
+    session.isActive = false;
+    return true;
+  }
+
+  // Auth methods
+  async validatePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return await bcrypt.hash(password, 12);
+  }
+}
+
+export const storage = new MemStorage();

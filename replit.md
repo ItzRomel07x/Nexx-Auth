@@ -169,6 +169,20 @@ Changelog:
   * Replaced all "Nexx Auth" text with "Nexx Auth" in frontend components
   * Updated documentation, API examples, and integration guides
   * Maintained functionality while ensuring complete visual and code consistency
+- July 16, 2025. Successfully migrated project to Vercel deployment architecture
+  * Converted Express.js application to Vercel serverless functions structure
+  * Created API routing system with /api/index.ts, /api/auth/[...auth].ts, /api/v1/[...api].ts
+  * Added comprehensive deployment documentation (deploy.md) with step-by-step Vercel setup
+  * Fixed Firebase configuration with proper fallback handling for development mode
+  * Created environment variable templates (.env.example) for production deployment
+  * Added vercel.json configuration with proper routing and Node.js 20.x runtime
+  * Project now fully compatible with Vercel serverless deployment while maintaining all functionality
+- July 16, 2025. Converted database backend to in-memory storage for default setup
+  * Implemented complete MemStorage class with all IStorage interface methods
+  * Replaced PostgreSQL DatabaseStorage with in-memory storage for faster development
+  * Fixed TypeScript compatibility issues with schema types
+  * Application now runs without requiring database setup for quick prototyping
+  * Maintains full Vercel deployment compatibility with both storage options
 ```
 
 ## User Preferences
