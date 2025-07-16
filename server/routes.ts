@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requirePermission, requireRole, PERMISSIONS, ROLES, getUserPermissions } from "./permissions";
-import { webhookService } from "./webhookService";
+import { storage } from "./storage.js";
+import { setupAuth, isAuthenticated } from "./replitAuth.js";
+import { requirePermission, requireRole, PERMISSIONS, ROLES, getUserPermissions } from "./permissions.js";
+import { webhookService } from "./webhookService.js";
 import { 
   insertApplicationSchema, 
   insertAppUserSchema, 
