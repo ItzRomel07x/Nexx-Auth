@@ -1,10 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage.js";
-import { setupAuth, isAuthenticated } from "./replitAuth.js";
-import { requirePermission, requireRole, PERMISSIONS, ROLES, getUserPermissions } from "./permissions.js";
-import { WebhookService } from "./webhookService.js";
-const webhookService = WebhookService.getInstance();
+import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requirePermission, requireRole, PERMISSIONS, ROLES, getUserPermissions } from "./permissions";
+import { webhookService } from "./webhookService";
 import { 
   insertApplicationSchema, 
   insertAppUserSchema, 
@@ -14,7 +13,7 @@ import {
   loginSchema,
   insertWebhookSchema,
   insertBlacklistSchema
-} from "../shared/schema.js";
+} from "@shared/schema";
 import { z } from "zod";
 
 // Middleware to validate API key for external API access
@@ -283,11 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const validatedData = insertApplicationSchema.parse(req.body);
-      // Ensure required fields are present
-      if (!validatedData.name) {
-        return res.status(400).json({ message: "Application name is required" });
-      }
-      const application = await storage.createApplication(userId, validatedData as any);
+      const application = await storage.createApplication(userId, validatedData);
       res.status(201).json(application);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -453,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate login success rate from recent activity
       const loginAttempts = recentActivity.filter(log => log.event.includes('login'));
-      const successfulLogins = loginAttempts.filter(log => log.success === true);
+      const successfulLogins = loginAttempts.filter(log => log.success);
       const loginSuccessRate = loginAttempts.length > 0 ? 
         Math.round((successfulLogins.length / loginAttempts.length) * 100) : 100;
 
@@ -470,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalApiRequests: recentActivity.length,
         lastActivity,
         applicationStatus: application.isActive ? 'online' : 'offline',
-        hwidLockEnabled: application.hwidLockEnabled || application.settings.requireHwid
+        hwidLockEnabled: application.hwidLockEnabled
       });
     } catch (error) {
       console.error("Error fetching application stats:", error);
@@ -543,11 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = insertLicenseKeySchema.parse(req.body);
-      // Ensure required fields
-      if (!validatedData.key) {
-        return res.status(400).json({ message: "License key is required" });
-      }
-      const license = await storage.createLicenseKey(applicationId, validatedData as any);
+      const license = await storage.createLicenseKey(applicationId, validatedData);
       res.status(201).json(license);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -617,10 +608,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const licenseKey = `${appPrefix}-${nanoid(8)}-${nanoid(8)}-${nanoid(8)}`;
       
       const license = await storage.createLicenseKey(applicationId, {
-        key: licenseKey,
+        licenseKey,
         maxUsers,
-        expiresAt: new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000),
-        isActive: true
+        validityDays,
+        description
       });
 
       res.status(201).json(license);
@@ -788,11 +779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const validatedData = updateAppUserSchema.parse(req.body);
-      // Convert string dates to Date objects
-      if (validatedData.expiresAt && typeof validatedData.expiresAt === 'string') {
-        (validatedData as any).expiresAt = new Date(validatedData.expiresAt);
-      }
-      const updatedUser = await storage.updateAppUser(userId, validatedData as any);
+      const updatedUser = await storage.updateAppUser(userId, validatedData);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found" });
@@ -995,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: email || null,
         licenseKey,
         hwid: hwid || null,
-        expiresAt: license.expiresAt
+        expiresAt: license.expiresAt.toISOString()
       };
 
       const user = await storage.createAppUserWithLicense(license.applicationId, userData);
@@ -1044,11 +1031,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             { 
               success: false, 
               errorMessage: `Login blocked: IP ${ipAddress} is blacklisted - ${ipBlacklist.reason || 'No reason provided'}`,
-              metadata: {
-                ipAddress,
-                userAgent,
-                hwid
-              }
+              ipAddress,
+              userAgent,
+              hwid
             }
           );
           
@@ -1070,11 +1055,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: `Login blocked: Username ${username} is blacklisted - ${usernameBlacklist.reason || 'No reason provided'}`,
-            metadata: {
-              ipAddress,
-              userAgent,
-              hwid
-            }
+            ipAddress,
+            userAgent,
+            hwid
           }
         );
         
@@ -1096,11 +1079,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             { 
               success: false, 
               errorMessage: `Login blocked: HWID ${hwid} is blacklisted - ${hwidBlacklist.reason || 'No reason provided'}`,
-              metadata: {
-                ipAddress,
-                userAgent,
-                hwid
-              }
+              ipAddress,
+              userAgent,
+              hwid
             }
           );
           
@@ -1121,13 +1102,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: `Version mismatch: Required ${application.version}, provided ${version}`,
-            metadata: { 
-              required_version: application.version, 
-              current_version: version,
-              ipAddress,
-              userAgent,
-              hwid
-            }
+            ipAddress,
+            userAgent,
+            hwid,
+            metadata: { required_version: application.version, current_version: version }
           }
         );
         
@@ -1150,12 +1128,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: "User not found",
+            ipAddress,
+            userAgent,
+            hwid,
             metadata: {
               reason: "non_existent_user",
-              attempt_time: new Date().toISOString(),
-              ipAddress,
-              userAgent,
-              hwid
+              attempt_time: new Date().toISOString()
             }
           }
         );
@@ -1176,11 +1154,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: "Account is disabled",
-            metadata: {
-              ipAddress,
-              userAgent,
-              hwid
-            }
+            ipAddress,
+            userAgent,
+            hwid
           }
         );
         
@@ -1200,11 +1176,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: "Account is temporarily paused",
-            metadata: {
-              ipAddress,
-              userAgent,
-              hwid
-            }
+            ipAddress,
+            userAgent,
+            hwid
           }
         );
         
@@ -1224,11 +1198,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: "Account has expired",
+            ipAddress,
+            userAgent,
+            hwid,
             metadata: {
-              expired_at: user.expiresAt.toISOString(),
-              ipAddress,
-              userAgent,
-              hwid
+              expired_at: user.expiresAt.toISOString()
             }
           }
         );
@@ -1245,7 +1219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Increment login attempts
         await storage.updateAppUser(user.id, { 
           loginAttempts: user.loginAttempts + 1,
-          lastLogin: new Date()
+          lastLoginAttempt: new Date()
         });
         
         // Send failed login webhook notification
@@ -1257,12 +1231,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { 
             success: false, 
             errorMessage: "Invalid password provided",
+            ipAddress,
+            userAgent,
+            hwid,
             metadata: {
               login_attempts: user.loginAttempts + 1,
-              attempt_time: new Date().toISOString(),
-              ipAddress,
-              userAgent,
-              hwid
+              attempt_time: new Date().toISOString()
             }
           }
         );
@@ -1295,12 +1269,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             { 
               success: false, 
               errorMessage: `HWID mismatch: Expected ${user.hwid}, got ${hwid}`,
+              ipAddress,
+              userAgent,
+              hwid,
               metadata: {
                 expected_hwid: user.hwid,
-                provided_hwid: hwid,
-                ipAddress,
-                userAgent,
-                hwid
+                provided_hwid: hwid
               }
             }
           );
@@ -1315,7 +1289,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Reset login attempts on successful login and update last login
       await storage.updateAppUser(user.id, { 
         lastLogin: new Date(),
-        loginAttempts: 0
+        loginAttempts: 0,
+        lastLoginAttempt: new Date()
       });
 
       // Send successful login webhook notification
@@ -1326,13 +1301,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user,
         { 
           success: true, 
+          ipAddress,
+          userAgent,
+          hwid,
           metadata: {
             login_time: new Date().toISOString(),
             version: version,
-            hwid_locked: application.hwidLockEnabled && !!user.hwid,
-            ipAddress,
-            userAgent,
-            hwid
+            hwid_locked: application.hwidLockEnabled && !!user.hwid
           }
         }
       );
@@ -1428,13 +1403,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user,
         { 
           success: true, 
+          ipAddress: req.ip || req.connection.remoteAddress,
+          userAgent: req.headers['user-agent'],
+          hwid,
           metadata: {
             registration_time: new Date().toISOString(),
             license_key: license_key,
-            version: version,
-            ipAddress: req.ip || req.connection.remoteAddress,
-            userAgent: req.headers['user-agent'],
-            hwid
+            version: version
           }
         }
       );
@@ -1521,6 +1496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ipAddress: req.ip || req.connection.remoteAddress,
           userAgent: req.headers['user-agent'] || '',
           location: null,
+          hwid: null,
           expiresAt: null,
           isActive: true
         });
@@ -1533,11 +1509,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user,
           { 
             success: true, 
+            ipAddress: req.ip || req.connection.remoteAddress,
+            userAgent: req.headers['user-agent'],
             metadata: {
               session_token: session_token,
-              session_start_time: new Date().toISOString(),
-              ipAddress: req.ip || req.connection.remoteAddress,
-              userAgent: req.headers['user-agent']
+              session_start_time: new Date().toISOString()
             }
           }
         );
@@ -1570,11 +1546,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             user,
             { 
               success: true, 
+              ipAddress: req.ip || req.connection.remoteAddress,
+              userAgent: req.headers['user-agent'],
               metadata: {
                 session_token: session_token,
-                session_end_time: new Date().toISOString(),
-                ipAddress: req.ip || req.connection.remoteAddress,
-                userAgent: req.headers['user-agent']
+                session_end_time: new Date().toISOString()
               }
             }
           );
@@ -1727,7 +1703,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const webhook = await storage.createWebhook(userId, validatedData as any);
+      const webhook = await storage.createWebhook(userId, validatedData);
       res.status(201).json(webhook);
     } catch (error) {
       if (error instanceof z.ZodError) {
