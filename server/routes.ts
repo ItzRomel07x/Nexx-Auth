@@ -13,7 +13,7 @@ import {
   loginSchema,
   insertWebhookSchema,
   insertBlacklistSchema
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { z } from "zod";
 
 // Middleware to validate API key for external API access
