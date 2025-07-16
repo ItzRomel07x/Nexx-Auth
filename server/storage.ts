@@ -191,19 +191,19 @@ export class MemStorage implements IStorage {
       apiKey,
       isActive: true,
       settings: {
-        requireHwid: insertApp.settings?.requireHwid || false,
-        requireVersion: insertApp.settings?.requireVersion || false,
-        allowedVersion: insertApp.settings?.allowedVersion || "1.0.0",
-        maxUsers: insertApp.settings?.maxUsers || 1000,
-        enableWebhooks: insertApp.settings?.enableWebhooks || false,
+        requireHwid: insertApp.settings?.requireHwid ?? false,
+        requireVersion: insertApp.settings?.requireVersion ?? false,
+        allowedVersion: insertApp.settings?.allowedVersion ?? "1.0.0",
+        maxUsers: insertApp.settings?.maxUsers ?? 1000,
+        enableWebhooks: insertApp.settings?.enableWebhooks ?? false,
       },
       messages: {
-        loginSuccess: insertApp.messages?.loginSuccess || "Login successful",
-        loginFailed: insertApp.messages?.loginFailed || "Login failed",
-        userBanned: insertApp.messages?.userBanned || "User banned",
-        userExpired: insertApp.messages?.userExpired || "User expired",
-        versionOutdated: insertApp.messages?.versionOutdated || "Version outdated",
-        hwidMismatch: insertApp.messages?.hwidMismatch || "HWID mismatch",
+        loginSuccess: insertApp.messages?.loginSuccess ?? "Login successful",
+        loginFailed: insertApp.messages?.loginFailed ?? "Login failed",
+        userBanned: insertApp.messages?.userBanned ?? "User banned",
+        userExpired: insertApp.messages?.userExpired ?? "User expired",
+        versionOutdated: insertApp.messages?.versionOutdated ?? "Version outdated",
+        hwidMismatch: insertApp.messages?.hwidMismatch ?? "HWID mismatch",
       },
       createdAt: now,
       updatedAt: now
@@ -217,9 +217,24 @@ export class MemStorage implements IStorage {
     const existingApp = this.applications.get(id);
     if (!existingApp) return undefined;
 
-    const updatedApp = {
+    const updatedApp: Application = {
       ...existingApp,
       ...updates,
+      settings: {
+        requireHwid: updates.settings?.requireHwid ?? existingApp.settings.requireHwid,
+        requireVersion: updates.settings?.requireVersion ?? existingApp.settings.requireVersion,
+        allowedVersion: updates.settings?.allowedVersion ?? existingApp.settings.allowedVersion,
+        maxUsers: updates.settings?.maxUsers ?? existingApp.settings.maxUsers,
+        enableWebhooks: updates.settings?.enableWebhooks ?? existingApp.settings.enableWebhooks,
+      },
+      messages: {
+        loginSuccess: updates.messages?.loginSuccess ?? existingApp.messages.loginSuccess,
+        loginFailed: updates.messages?.loginFailed ?? existingApp.messages.loginFailed,
+        userBanned: updates.messages?.userBanned ?? existingApp.messages.userBanned,
+        userExpired: updates.messages?.userExpired ?? existingApp.messages.userExpired,
+        versionOutdated: updates.messages?.versionOutdated ?? existingApp.messages.versionOutdated,
+        hwidMismatch: updates.messages?.hwidMismatch ?? existingApp.messages.hwidMismatch,
+      },
       updatedAt: new Date()
     };
 
