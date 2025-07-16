@@ -45,6 +45,7 @@ export interface Application {
     versionOutdated: string;
     hwidMismatch: string;
   };
+  hwidLockEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -107,6 +108,7 @@ export interface AppUser {
   expiresAt?: Date;
   licenseKeyId?: number;
   lastLogin?: Date;
+  loginAttempts?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -142,6 +144,8 @@ export interface UpdateAppUser {
   isPaused?: boolean;
   expiresAt?: Date;
   licenseKeyId?: number;
+  lastLogin?: Date;
+  loginAttempts?: number;
 }
 
 export interface LicenseKey {
@@ -210,6 +214,8 @@ export interface ActivityLog {
   userAgent?: string;
   location?: string;
   metadata?: any;
+  success?: boolean;
+  errorMessage?: string;
   createdAt: Date;
 }
 
@@ -221,6 +227,8 @@ export interface InsertActivityLog {
   userAgent?: string;
   location?: string;
   metadata?: any;
+  success?: boolean;
+  errorMessage?: string;
 }
 
 export interface ActiveSession {

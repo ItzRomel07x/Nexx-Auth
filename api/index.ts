@@ -7,21 +7,14 @@ import { readFile } from 'fs/promises';
 
 const app = express();
 
-// Global server compatibility settings
 app.use((req, res, next) => {
-  // CORS headers for global access
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Key');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
-  
-  // Security headers for global deployment
   res.header('X-Content-Type-Options', 'nosniff');
   res.header('X-Frame-Options', 'DENY');
   res.header('X-XSS-Protection', '1; mode=block');
-  res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
   } else {
@@ -47,19 +40,17 @@ async function initializeApp() {
   }
 }
 
-// Serve static files from dist/public
+// Serve static files
 app.use(express.static(path.join(process.cwd(), 'dist/public')));
 
-// Catch-all handler for React app
+// Fallback for SPA
 app.get('*', async (req, res) => {
   try {
-    const htmlPath = path.join(process.cwd(), 'dist/public/index.html');
-    const html = await readFile(htmlPath, 'utf-8');
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
+    const indexPath = path.join(process.cwd(), 'dist/public/index.html');
+    const indexHtml = await readFile(indexPath, 'utf-8');
+    res.send(indexHtml);
   } catch (error) {
-    console.error('Error serving index.html:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send('Server Error');
   }
 });
 

@@ -1,0 +1,98 @@
+[00:26:16.376] Running build in Washington, D.C., USA (East) – iad1
+[00:26:16.376] Build machine configuration: 2 cores, 8 GB
+[00:26:16.415] Cloning github.com/ItzRomel07x/Nexx-Auth (Branch: main, Commit: defbee5)
+[00:26:16.877] Cloning completed: 460.000ms
+[00:26:18.668] Restored build cache from previous deployment (5ziuKYhdN3LzNGyqewJRq8P3XAnS)
+[00:26:21.003] Running "vercel build"
+[00:26:21.578] Vercel CLI 44.3.0
+[00:26:22.714] Warning: Due to "engines": { "node": "20.x" } in your `package.json` file, the Node.js Version defined in your Project Settings ("22.x") will not apply, Node.js Version "20.x" will be used instead. Learn More: http://vercel.link/node-version
+[00:26:22.727] Installing dependencies...
+[00:26:25.186] 
+[00:26:25.187] up to date in 2s
+[00:26:25.187] 
+[00:26:25.187] 102 packages are looking for funding
+[00:26:25.188]   run `npm fund` for details
+[00:26:25.319] 
+[00:26:25.319] > rest-express@1.0.0 build
+[00:26:25.320] > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+[00:26:25.320] 
+[00:26:25.620] [36mvite v5.4.14 [32mbuilding for production...[36m[39m
+[00:26:25.670] transforming...
+[00:26:26.052] Browserslist: browsers data (caniuse-lite) is 9 months old. Please run:
+[00:26:26.052]   npx update-browserslist-db@latest
+[00:26:26.052]   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[00:26:31.828] [32m✓[39m 1756 modules transformed.
+[00:26:32.294] rendering chunks...
+[00:26:32.305] computing gzip size...
+[00:26:32.327] [2m../dist/public/[22m[32mindex.html                 [39m[1m[2m  0.86 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m
+[00:26:32.328] [2m../dist/public/[22m[2massets/[22m[35mindex-BWNvSllO.css  [39m[1m[2m 83.34 kB[22m[1m[22m[2m │ gzip:  14.17 kB[22m
+[00:26:32.329] [2m../dist/public/[22m[2massets/[22m[36mindex-D9KvrA55.js   [39m[1m[33m845.76 kB[39m[22m[2m │ gzip: 209.22 kB[22m
+[00:26:32.329] [33m
+[00:26:32.329] (!) Some chunks are larger than 500 kB after minification. Consider:
+[00:26:32.329] - Using dynamic import() to code-split the application
+[00:26:32.330] - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+[00:26:32.330] - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[00:26:32.330] [32m✓ built in 6.68s[39m
+[00:26:32.395] 
+[00:26:32.395]   dist/index.js  113.5kb
+[00:26:32.395] 
+[00:26:32.395] ⚡ Done in 16ms
+[00:26:32.424] Warning: Due to "engines": { "node": "20.x" } in your `package.json` file, the Node.js Version defined in your Project Settings ("22.x") will not apply. Learn More: http://vercel.link/node-version
+[00:26:32.650] Using TypeScript 5.6.3 (local user-provided)
+[00:26:38.172] server/storage.ts(226,31): error TS2345: Argument of type '{ updatedAt: Date; name: string; description?: string; isActive: boolean; settings: { requireHwid?: boolean; requireVersion?: boolean; allowedVersion?: string; maxUsers?: number; enableWebhooks?: boolean; }; ... 4 more ...; createdAt: Date; }' is not assignable to parameter of type 'Application'.
+[00:26:38.172]   The types of 'settings.requireHwid' are incompatible between these types.
+[00:26:38.172]     Type 'boolean | undefined' is not assignable to type 'boolean'.
+[00:26:38.172]       Type 'undefined' is not assignable to type 'boolean'.
+[00:26:38.172] server/storage.ts(227,5): error TS2322: Type '{ updatedAt: Date; name: string; description?: string; isActive: boolean; settings: { requireHwid?: boolean; requireVersion?: boolean; allowedVersion?: string; maxUsers?: number; enableWebhooks?: boolean; }; ... 4 more ...; createdAt: Date; }' is not assignable to type 'Application'.
+[00:26:38.173]   The types of 'settings.requireHwid' are incompatible between these types.
+[00:26:38.173]     Type 'boolean | undefined' is not assignable to type 'boolean'.
+[00:26:38.173]       Type 'undefined' is not assignable to type 'boolean'.
+[00:26:38.173] 
+[00:26:43.121] Warning: Due to "engines": { "node": "20.x" } in your `package.json` file, the Node.js Version defined in your Project Settings ("22.x") will not apply. Learn More: http://vercel.link/node-version
+[00:26:43.298] Using TypeScript 5.6.3 (local user-provided)
+[00:26:45.004] server/routes.ts(452,64): error TS2339: Property 'success' does not exist on type 'ActivityLog'.
+[00:26:45.005] server/routes.ts(469,38): error TS2339: Property 'hwidLockEnabled' does not exist on type 'Application'.
+[00:26:45.006] server/routes.ts(542,69): error TS2345: Argument of type '{ key: string; isActive?: boolean | undefined; maxUsers?: number | undefined; expiresAt?: string | undefined; }' is not assignable to parameter of type 'InsertLicenseKey'.
+[00:26:45.006]   Types of property 'expiresAt' are incompatible.
+[00:26:45.006]     Type 'string | undefined' is not assignable to type 'Date | undefined'.
+[00:26:45.006]       Type 'string' is not assignable to type 'Date'.
+[00:26:45.006] server/routes.ts(612,9): error TS2353: Object literal may only specify known properties, and 'licenseKey' does not exist in type 'InsertLicenseKey'.
+[00:26:45.006] server/routes.ts(748,25): error TS2551: Property 'createAppUser' does not exist on type 'MemStorage'. Did you mean 'getAppUser'?
+[00:26:45.007] server/routes.ts(783,63): error TS2345: Argument of type '{ isActive?: boolean | undefined; username?: string | undefined; password?: string | undefined; hwid?: string | undefined; email?: string | undefined; expiresAt?: string | undefined; ... 6 more ...; licenseKeyId?: number | undefined; }' is not assignable to parameter of type 'UpdateAppUser'.
+[00:26:45.007]   Types of property 'expiresAt' are incompatible.
+[00:26:45.007]     Type 'string | undefined' is not assignable to type 'Date | undefined'.
+[00:26:45.007]       Type 'string' is not assignable to type 'Date'.
+[00:26:45.007] server/routes.ts(986,20): error TS18048: 'license.expiresAt' is possibly 'undefined'.
+[00:26:45.007] server/routes.ts(989,82): error TS2345: Argument of type '{ username: any; password: any; email: any; licenseKey: any; hwid: any; expiresAt: string; }' is not assignable to parameter of type 'InsertAppUser'.
+[00:26:45.007]   Types of property 'expiresAt' are incompatible.
+[00:26:45.010]     Type 'string' is not assignable to type 'Date'.
+[00:26:45.010] server/routes.ts(1035,15): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1059,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1083,15): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1106,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1132,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1158,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1180,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.010] server/routes.ts(1202,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.011] server/routes.ts(1222,11): error TS2353: Object literal may only specify known properties, and 'loginAttempts' does not exist in type 'UpdateAppUser'.
+[00:26:45.011] server/routes.ts(1222,31): error TS2339: Property 'loginAttempts' does not exist on type 'AppUser'.
+[00:26:45.011] server/routes.ts(1235,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.011] server/routes.ts(1239,36): error TS2339: Property 'loginAttempts' does not exist on type 'AppUser'.
+[00:26:45.011] server/routes.ts(1273,15): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.011] server/routes.ts(1292,9): error TS2353: Object literal may only specify known properties, and 'lastLogin' does not exist in type 'UpdateAppUser'.
+[00:26:45.011] server/routes.ts(1305,11): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.011] server/routes.ts(1407,11): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.011] server/routes.ts(1499,11): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+[00:26:45.011] server/routes.ts(1513,13): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.011] server/routes.ts(1550,15): error TS2353: Object literal may only specify known properties, and 'ipAddress' does not exist in type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.012] server/routes.ts(1991,9): error TS2345: Argument of type '{ ipAddress: any; userAgent: any; hwid: string; } | { success: boolean; errorMessage: string; ipAddress: any; userAgent: any; } | { ipAddress: any; userAgent: any; } | { success: boolean; errorMessage: string; ipAddress: any; userAgent: any; } | ... 5 more ... | { ...; }' is not assignable to parameter of type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; } | undefined'.
+[00:26:45.012]   Type '{ ipAddress: any; userAgent: any; hwid: string; }' has no properties in common with type '{ success?: boolean | undefined; errorMessage?: string | undefined; metadata?: any; }'.
+[00:26:45.013] 
+[00:26:45.147] server/webhookService.ts(204,9): error TS2353: Object literal may only specify known properties, and 'hwid' does not exist in type 'InsertActivityLog'.
+[00:26:45.147] 
+[00:26:49.194] Warning: Due to "engines": { "node": "20.x" } in your `package.json` file, the Node.js Version defined in your Project Settings ("22.x") will not apply. Learn More: http://vercel.link/node-version
+[00:26:49.250] Using TypeScript 5.6.3 (local user-provided)
+[00:26:54.796] Build Completed in /vercel/output [32s]
+[00:26:55.401] Deploying outputs...
+[00:27:04.367] 
+[00:27:04.506] Deployment completed

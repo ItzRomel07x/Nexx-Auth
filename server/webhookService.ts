@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { createHash, createHmac } from 'crypto';
 import { storage } from './storage.js';
 import type { Webhook, ActivityLog } from '../shared/schema.js';
 
@@ -31,8 +31,7 @@ export class WebhookService {
   }
 
   private generateSignature(payload: string, secret: string): string {
-    return crypto
-      .createHmac('sha256', secret)
+    return createHmac('sha256', secret)
       .update(payload)
       .digest('hex');
   }
@@ -201,9 +200,8 @@ export class WebhookService {
         appUserId: userData?.id,
         event,
         ipAddress: userData?.ip_address,
-        hwid: userData?.hwid,
         userAgent: userData?.user_agent,
-        metadata,
+        metadata: { ...metadata, hwid: userData?.hwid },
         success,
         errorMessage
       });

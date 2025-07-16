@@ -61,10 +61,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize MongoDB connection
-  const { mongoStorage } = await import("./mongoStorage.js");
-  await mongoStorage.connect();
-  
+  // Initialize in-memory storage (no connection needed)
   const server = await registerRoutes(app);
 
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
