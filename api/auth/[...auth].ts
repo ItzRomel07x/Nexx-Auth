@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import express from 'express';
-import { setupAuth } from '../../server/replitAuth.js';
+import { setupAuth } from '../../server/replitAuth';
 
 const app = express();
 
